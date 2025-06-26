@@ -70,7 +70,7 @@ DATABASES = {
         'USER': os.getenv('POSTGRES_USER', 'library_user'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'library_password'),
         'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'PORT': os.getenv('DB_PORT', '5431'),
     }
 }
 
@@ -102,7 +102,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-    ]
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 100
 }
 
 # Celery Configuration

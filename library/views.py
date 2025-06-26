@@ -4,6 +4,7 @@ from .models import Author, Book, Member, Loan
 from .serializers import AuthorSerializer, BookSerializer, MemberSerializer, LoanSerializer
 from rest_framework.decorators import action
 from django.utils import timezone
+from datetime import timedelta
 from .tasks import send_loan_notification
 
 class AuthorViewSet(viewsets.ModelViewSet):
@@ -49,6 +50,40 @@ class MemberViewSet(viewsets.ModelViewSet):
     queryset = Member.objects.all()
     serializer_class = MemberSerializer
 
+
+    @action(detail=True, methods=["post"])
+    def top_active(self, request):
+        limit = int(request.query_params.get('limit', 10))
+
+        top_members = Member
+
+
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
+    
+    @action(detail=True, methods=["post"])
+    def extend_due_date(self, request, pk=None):
+        loan = self.get_object()
+
+        #check if returned
+        if loan.is_returned:
+            return Response({'error': 'Book already returned'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        days_to_extend = request.data.get("additional_days")
+
+        try:
+            days_to_extend = int(days_to_extend)
+            if days_to_extend <= 0:
+                return Response({'error': 'Days to extend must be positive'}, status=status.HTTP_400_BAD_REQUEST)
+        except (ValueError, TypeError):
+            return Response({'error': 'Days to extend must be an interger'}, status=status.HTTP_400_BAD_REQUEST)
+        
+
+        loan.due_date += timezone
+        loan.save()
+        return Response({
+            'status': "Loan date extended",
+            'new_date': loan.due_date,
+            "days_extended": days_to_extend
+        }, status=status.HTTP_200_OK)
