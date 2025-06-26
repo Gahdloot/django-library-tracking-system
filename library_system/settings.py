@@ -70,7 +70,7 @@ DATABASES = {
         'USER': os.getenv('POSTGRES_USER', 'library_user'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'library_password'),
         'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', '5431'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 

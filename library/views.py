@@ -6,6 +6,7 @@ from rest_framework.decorators import action
 from django.utils import timezone
 from datetime import timedelta
 from .tasks import send_loan_notification
+from django.db.models import Count, Q
 
 class AuthorViewSet(viewsets.ModelViewSet):
     queryset = Author.objects.all()
@@ -51,11 +52,27 @@ class MemberViewSet(viewsets.ModelViewSet):
     serializer_class = MemberSerializer
 
 
-    @action(detail=True, methods=["post"])
+    @action(detail=False, methods=['get'], url_path='top-active')
     def top_active(self, request):
-        limit = int(request.query_params.get('limit', 10))
-
-        top_members = Member
+        # Get top 5 members with most active loans
+        top_members = Member.objects.annotate(
+            active_loans=Count('loans', filter=Q(loans__is_returned=False))
+        ).filter(
+            active_loans__gt=0
+        ).order_by(
+            '-active_loans'
+        )[:5]
+        
+        # Format response as requested
+        members_data = []
+        for member in top_members:
+            members_data.append({
+                'id': member.id,
+                'username': member.user.username,
+                'active_loans': member.active_loans
+            })
+        
+        return Response(members_data, status=status.HTTP_200_OK)
 
 
 class LoanViewSet(viewsets.ModelViewSet):
